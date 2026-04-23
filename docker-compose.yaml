@@ -1,0 +1,192 @@
+# =============================================================================
+# Haykal Starter — Docker Compose for Local Development
+# =============================================================================
+# Project naming:
+#   Every container, image, and volume name is prefixed with ${APP_SLUG}.
+#   The default is `haykal-app`; rename once per project via:
+#       make rename-project NAME=my-new-project
+#   …or by exporting APP_SLUG in your shell / setting it in .env.
+#
+# Quick Start:
+#   make setup       - First-time setup (creates .env, builds, starts, migrates)
+#   make docker-up   - Start containers
+#   make docker-down - Stop containers
+#   make docker-logs - View app logs
+#   make help        - Show all available commands
+#
+# Or use docker compose directly:
+#   docker compose up -d                              # Start all services
+#   docker compose up -d --build                      # Rebuild and start
+#   docker compose logs -f app                        # Follow app logs
+#   docker compose exec app sh                        # Shell into app container
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: deployment/Dev.Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    image: ${APP_SLUG:-haykal-app}-dev
+    container_name: ${APP_SLUG:-haykal-app}-app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+      - node_modules:/var/www/html/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      CONTAINER_MODE: http
+    env_file:
+      - .env
+    networks:
+      - haykal
+
+  horizon:
+    build:
+      context: .
+      dockerfile: deployment/Dev.Dockerfile
+    image: ${APP_SLUG:-haykal-app}-dev
+    container_name: ${APP_SLUG:-haykal-app}-horizon
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+      - node_modules:/var/www/html/node_modules
+    depends_on:
+      - app
+      - redis
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+    env_file:
+      - .env
+    command: php artisan horizon
+    healthcheck:
+      disable: true
+    networks:
+      - haykal
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: deployment/Dev.Dockerfile
+    image: ${APP_SLUG:-haykal-app}-dev
+    container_name: ${APP_SLUG:-haykal-app}-scheduler
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+      - node_modules:/var/www/html/node_modules
+    depends_on:
+      - app
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+    env_file:
+      - .env
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    networks:
+      - haykal
+    profiles:
+      - workers
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: ${APP_SLUG:-haykal-app}-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-haykal}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-haykal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - haykal
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${APP_SLUG:-haykal-app}-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - haykal
+
+  minio:
+    image: minio/minio
+    container_name: ${APP_SLUG:-haykal-app}-minio
+    restart: unless-stopped
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    volumes:
+      - minio-data:/data
+    command: server --console-address ":9001" /data
+    networks:
+      - haykal
+
+  # Create default bucket on startup
+  minio-setup:
+    image: minio/mc
+    container_name: ${APP_SLUG:-haykal-app}-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minio} ${MINIO_ROOT_PASSWORD:-minio123};
+      mc mb --ignore-existing myminio/${MINIO_BUCKET:-haykal};
+      mc anonymous set public myminio/${MINIO_BUCKET:-haykal};
+      exit 0;
+      "
+    networks:
+      - haykal
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: ${APP_SLUG:-haykal-app}-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_WEB_PORT:-8025}:8025" # Web UI
+      - "${MAILPIT_SMTP_PORT:-1025}:1025" # SMTP
+    networks:
+      - haykal
+
+volumes:
+  pgdata:
+  redis-data:
+  minio-data:
+  vendor:
+  node_modules:
+
+networks:
+  haykal:
+    driver: bridge
