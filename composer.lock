@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9a3971787a1d7c97ba60a53fd9161a5f",
+    "content-hash": "23829cc63f08e1676cef33c111d075e9",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -62,16 +62,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.379.5",
+            "version": "3.379.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "c81342df6e09bbc30d28ea57cc4644bb35c53ce2"
+                "reference": "587f0bafd28a7dc3395b0c55f93f2474657767e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/c81342df6e09bbc30d28ea57cc4644bb35c53ce2",
-                "reference": "c81342df6e09bbc30d28ea57cc4644bb35c53ce2",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/587f0bafd28a7dc3395b0c55f93f2474657767e2",
+                "reference": "587f0bafd28a7dc3395b0c55f93f2474657767e2",
                 "shasum": ""
             },
             "require": {
@@ -153,9 +153,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.379.5"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.379.6"
             },
-            "time": "2026-04-22T18:13:16+00:00"
+            "time": "2026-04-23T18:11:11+00:00"
         },
         {
             "name": "beste/clock",
@@ -3193,38 +3193,52 @@
         },
         {
             "name": "hitaqnia/haykal",
-            "version": "1.0.0-dev",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hitaqnia/haykal.git",
+                "reference": "bc060e0a9880ac8426d68878a05eeda5d3227bec"
+            },
             "dist": {
-                "type": "path",
-                "url": "../haykal/packages/haykal",
-                "reference": "371fbc3f23315e06bd9c330d63e0478c3ae94dab"
+                "type": "zip",
+                "url": "https://api.github.com/repos/hitaqnia/haykal/zipball/bc060e0a9880ac8426d68878a05eeda5d3227bec",
+                "reference": "bc060e0a9880ac8426d68878a05eeda5d3227bec",
+                "shasum": ""
             },
             "require": {
-                "hitaqnia/haykal-api": "@dev",
-                "hitaqnia/haykal-filament": "@dev",
+                "hitaqnia/haykal-api": "^1.0",
+                "hitaqnia/haykal-filament": "^1.0",
                 "php": "^8.3"
             },
             "type": "metapackage",
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "proprietary"
             ],
             "description": "Haykal metapackage: installs haykal-api + haykal-filament for full-stack projects.",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/hitaqnia/haykal/issues",
+                "source": "https://github.com/hitaqnia/haykal/tree/v1.0.0"
+            },
+            "time": "2026-04-23T18:21:18+00:00"
         },
         {
             "name": "hitaqnia/haykal-api",
-            "version": "1.0.0-dev",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hitaqnia/haykal-api.git",
+                "reference": "521969220a8127a4fdcc6065c395ba13ef77a209"
+            },
             "dist": {
-                "type": "path",
-                "url": "../haykal/packages/haykal-api",
-                "reference": "272609620af5866cf80fa29098129c123bd3aef5"
+                "type": "zip",
+                "url": "https://api.github.com/repos/hitaqnia/haykal-api/zipball/521969220a8127a4fdcc6065c395ba13ef77a209",
+                "reference": "521969220a8127a4fdcc6065c395ba13ef77a209",
+                "shasum": ""
             },
             "require": {
                 "dedoc/scramble": "^0.13.20",
-                "hitaqnia/haykal-core": "@dev",
+                "hitaqnia/haykal-core": "^1.0",
                 "illuminate/contracts": "^13.0",
                 "illuminate/http": "^13.0",
                 "illuminate/routing": "^13.0",
@@ -3245,25 +3259,33 @@
                     "HiTaqnia\\Haykal\\Api\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "proprietary"
             ],
             "description": "Haykal API layer: ApiResponse, Scramble extensions, the /me endpoint, and conventions for Controllers / Requests / Resources.",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/hitaqnia/haykal-api/issues",
+                "source": "https://github.com/hitaqnia/haykal-api/tree/v1.0.0"
+            },
+            "time": "2026-04-23T18:02:00+00:00"
         },
         {
             "name": "hitaqnia/haykal-core",
-            "version": "1.0.0-dev",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hitaqnia/haykal-core.git",
+                "reference": "b956a8fd3991d4ca376bdc1655e7ad29be1a226e"
+            },
             "dist": {
-                "type": "path",
-                "url": "../haykal/packages/haykal-core",
-                "reference": "370129f86eb702cfdbab2e2df97adc68a503e454"
+                "type": "zip",
+                "url": "https://api.github.com/repos/hitaqnia/haykal-core/zipball/b956a8fd3991d4ca376bdc1655e7ad29be1a226e",
+                "reference": "b956a8fd3991d4ca376bdc1655e7ad29be1a226e",
+                "shasum": ""
             },
             "require": {
-                "hitaqnia/huwiya-laravel": "@dev",
+                "hitaqnia/huwiya-laravel": "^1.0",
                 "illuminate/contracts": "^13.0",
                 "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
@@ -3290,26 +3312,34 @@
                     "HiTaqnia\\Haykal\\Core\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "proprietary"
             ],
             "description": "Haykal shared kernel: Result pattern, tenancy, domain concerns, Identity domain (User + Huwiya integration).",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/hitaqnia/haykal-core/issues",
+                "source": "https://github.com/hitaqnia/haykal-core/tree/v1.0.0"
+            },
+            "time": "2026-04-23T16:33:19+00:00"
         },
         {
             "name": "hitaqnia/haykal-filament",
-            "version": "1.0.0-dev",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hitaqnia/haykal-filament.git",
+                "reference": "b89565d15896582f5c9a213c702a461f9bb2c83d"
+            },
             "dist": {
-                "type": "path",
-                "url": "../haykal/packages/haykal-filament",
-                "reference": "7bb05a9e428bdc28183fda3f8b03fe2276e85e21"
+                "type": "zip",
+                "url": "https://api.github.com/repos/hitaqnia/haykal-filament/zipball/b89565d15896582f5c9a213c702a461f9bb2c83d",
+                "reference": "b89565d15896582f5c9a213c702a461f9bb2c83d",
+                "shasum": ""
             },
             "require": {
                 "filament/filament": "^5.5",
-                "hitaqnia/haykal-core": "@dev",
+                "hitaqnia/haykal-core": "^1.0",
                 "illuminate/contracts": "^13.0",
                 "illuminate/support": "^13.0",
                 "lara-zeus/spatie-translatable": "^2.0",
@@ -3328,22 +3358,30 @@
                     "HiTaqnia\\Haykal\\Filament\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "proprietary"
             ],
             "description": "Haykal Filament foundation: BasePanel, BaseResource, base pages, Huwiya login page, translatable tabs, base theme, curated plugin set.",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/hitaqnia/haykal-filament/issues",
+                "source": "https://github.com/hitaqnia/haykal-filament/tree/v1.0.0"
+            },
+            "time": "2026-04-23T18:02:01+00:00"
         },
         {
             "name": "hitaqnia/huwiya-laravel",
-            "version": "dev-develop",
-            "dist": {
-                "type": "path",
-                "url": "../huwiya/packages/huwiya-laravel",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hitaqnia/huwiya-laravel.git",
                 "reference": "f8a0c4eac45f06458e55d027adb24abc87e56e4f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hitaqnia/huwiya-laravel/zipball/f8a0c4eac45f06458e55d027adb24abc87e56e4f",
+                "reference": "f8a0c4eac45f06458e55d027adb24abc87e56e4f",
+                "shasum": ""
             },
             "require": {
                 "illuminate/auth": "^13.0",
@@ -3371,19 +3409,7 @@
                     "Huwiya\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Huwiya\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "pest"
-                ],
-                "test-coverage": [
-                    "pest --coverage"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -3396,7 +3422,7 @@
             "description": "A Laravel SDK for integrating with the Huwiya Identity Provider.",
             "homepage": "https://github.com/hitaqnia/huwiya-laravel",
             "keywords": [
-                "authentication",
+                "Authentication",
                 "huwiya",
                 "identity",
                 "jwt",
@@ -3407,10 +3433,7 @@
                 "issues": "https://github.com/hitaqnia/huwiya-laravel/issues",
                 "source": "https://github.com/hitaqnia/huwiya-laravel"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-04-20T22:52:26+00:00"
         },
         {
             "name": "kirschbaum-development/eloquent-power-joins",
@@ -3719,16 +3742,16 @@
         },
         {
             "name": "lara-zeus/spatie-translatable",
-            "version": "2.0.0",
+            "version": "2.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lara-zeus/spatie-translatable.git",
-                "reference": "260339895e504d54f8fb82d5a3e5b1a5563eaed4"
+                "reference": "4583205ade3270a9b4c3293cab102f8b2d772523"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lara-zeus/spatie-translatable/zipball/260339895e504d54f8fb82d5a3e5b1a5563eaed4",
-                "reference": "260339895e504d54f8fb82d5a3e5b1a5563eaed4",
+                "url": "https://api.github.com/repos/lara-zeus/spatie-translatable/zipball/4583205ade3270a9b4c3293cab102f8b2d772523",
+                "reference": "4583205ade3270a9b4c3293cab102f8b2d772523",
                 "shasum": ""
             },
             "require": {
@@ -3773,7 +3796,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-01-28T13:50:52+00:00"
+            "time": "2026-04-23T17:31:05+00:00"
         },
         {
             "name": "laravel-notification-channels/fcm",
@@ -13923,10 +13946,8 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "dev",
-    "stability-flags": {
-        "hitaqnia/haykal": 20
-    },
+    "minimum-stability": "stable",
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
