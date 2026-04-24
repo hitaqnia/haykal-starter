@@ -1,17 +1,14 @@
 <?php
 
 use App\Providers\AppServiceProvider;
-use HiTaqnia\Haykal\Api\Identity\IdentityApiProvider;
 
 return [
     AppServiceProvider::class,
 
-    // Haykal API providers
-    IdentityApiProvider::class,
-
     // ---------------------------------------------------------------
     // Application API providers (add one per module)
     // ---------------------------------------------------------------
+    // App\Providers\Apis\IdentityApiProvider::class,
     // App\Providers\Apis\ManagementApiProvider::class,
     // App\Providers\Apis\ResidentsApiProvider::class,
 

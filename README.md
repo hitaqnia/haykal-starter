@@ -1,6 +1,6 @@
 # HiTaqnia Haykal Starter
 
-A Laravel 13 application with the [Haykal](../haykal) suite pre-wired — Huwiya-backed authentication, a working `/api/identity/me` endpoint, a Filament-ready base, and the shared Haykal middleware stack. Clone this directory as the starting point for any new HiTaqnia project.
+A Laravel 13 application with the [Haykal](../haykal) suite pre-wired — Huwiya-backed authentication, a Filament-ready base, the Haykal API envelope, Scramble, and the shared Haykal middleware stack. Clone this directory as the starting point for any new HiTaqnia project.
 
 ---
 
@@ -91,9 +91,9 @@ Migrations already applied on first install:
 
 ### API
 
-- `GET /api/identity/me` returns the authenticated Huwiya user through the Haykal envelope. Wired in `routes/api/identity-api.php` and registered with Scramble via `IdentityApiProvider`.
-- Scramble docs UI: `/docs/identity-api` · raw spec: `/docs/identity-api.json`.
-- Every 4xx/5xx framework exception on `api/*` routes emits the Haykal envelope (`success`, `code`, `message`, `data`, `errors`).
+- The Haykal response envelope (`success`, `code`, `message`, `data`, `errors`) is wired in. `ApiResponse::ok(...)`, `::created(...)`, `::businessError(...)`, etc. emit it.
+- Every 4xx/5xx framework exception on `api/*` routes is translated into the envelope automatically by `HaykalApiServiceProvider`.
+- Scramble is installed but no API modules ship with the starter. Add your first module by subclassing `HiTaqnia\Haykal\Api\ApiProvider` — for example `app/Providers/Apis/IdentityApiProvider.php` — register it in `bootstrap/providers.php`, and mount its route file from `routes/api.php`. See the [haykal-api README](../haykal-monorepo/packages/haykal-api/README.md) for the full pattern.
 
 ### Middleware
 
@@ -111,7 +111,6 @@ The following middlewares are attached to both `web` and `api` route groups:
 - `config/huwiya.php` — Huwiya SDK configuration.
 - `config/scramble.php` — OpenAPI documentation generator.
 - `config/haykal-filament-icons.php` — icon aliases (Phosphor/Tabler) merged into Filament's icon registry.
-- `routes/api/identity-api.php` — the `/me` route file, included from `routes/api.php`.
 
 ---
 
@@ -449,18 +448,14 @@ composer dev
 
 `composer dev` runs `php artisan serve`, the queue listener, Pail (log tail), and Vite concurrently. Redis, Postgres, and MinIO are your responsibility when running this way — update `.env` accordingly.
 
-Quick sanity checks once the server is up:
+Quick sanity check once the server is up:
 
 ```bash
-# Haykal envelope (401 unauthenticated)
-curl -i http://localhost:8000/api/identity/me
-
-# Scramble docs (UI)
-open http://localhost:8000/docs/identity-api
-
-# Any panel you have registered redirects unauthenticated users to Huwiya
+# Any panel you have registered redirects unauthenticated users to Huwiya.
 curl -i http://localhost:8000/<your-panel-id>
 ```
+
+API endpoints and their Scramble docs are added by subclassing `HiTaqnia\Haykal\Api\ApiProvider` per module — the starter does not ship any. See [haykal-api](../haykal-monorepo/packages/haykal-api/README.md) for the pattern.
 
 ---
 

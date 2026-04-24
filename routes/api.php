@@ -12,6 +12,9 @@ declare(strict_types=1);
 | `HiTaqnia\Haykal\Api\ApiProvider`) that handles its Scramble
 | registration, security schemes, and docs UI.
 |
+| No API modules ship in the starter — add them here as your application
+| grows. Example:
+|
+|     require __DIR__.'/api/properties-api.php';
+|
 */
-
-require __DIR__.'/api/identity-api.php';
