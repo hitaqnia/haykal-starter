@@ -24,13 +24,15 @@ The starter follows the HiTaqnia DDD layout: Laravel's `app/` for framework glue
 haykal-starter/
 ├── app/                   Standard Laravel directory: providers, console, HTTP.
 ├── domain/                DDD domains — each subdirectory is one bounded context.
-│   └── Identity/          Ships with three model subclasses + one factory.
+│   └── Identity/          Standalone identity layer — owned by the app.
 │       ├── Models/
-│       │   ├── User.php              extends HiTaqnia\Haykal\Core\Identity\Models\User
-│       │   ├── Role.php              extends HiTaqnia\Haykal\Core\Identity\Models\Role
-│       │   └── Permission.php        extends HiTaqnia\Haykal\Core\Identity\Models\Permission
+│       │   ├── User.php              Authenticatable + Huwiya claim sync + phone cast + query builder
+│       │   ├── Role.php              extends Spatie\Permission\Models\Role (ULID-keyed)
+│       │   └── Permission.php        extends Spatie\Permission\Models\Permission (ULID-keyed)
+│       ├── QueryBuilders/
+│       │   └── UserQueryBuilder.php  wherePhoneNumber() / getByPhoneNumber()
 │       └── Database/Factories/
-│           └── UserFactory.php       extends HiTaqnia\Haykal\Core\Database\Factories\UserFactory
+│           └── UserFactory.php       Iraqi-phone seed data
 ├── support/               App-wide utilities. Empty — add as needs emerge.
 ├── packages/              In-tree path repositories. Empty — `packages/*` is already declared as a path repo in composer.json.
 ├── deployment/            Dev-only Docker assets (Dev.Dockerfile, php.dev.ini).
@@ -58,36 +60,38 @@ Everything below is installed, configured, and migrated. No action needed unless
 | `hitaqnia/haykal` | Metapackage — installs `haykal-core`, `haykal-api`, and `haykal-filament` together. |
 | `hitaqnia/huwiya-laravel` | Authentication via the Huwiya Identity Provider. |
 | Filament 5.5 | Admin panel framework. |
-| Spatie permission / media-library / translatable / data | Roles, attachments, model translations, DTOs. |
+| Spatie permission / media-library / translatable / data | Roles, attachments, model translations, DTOs. Installed directly by the starter. |
 | Dedoc Scramble | Auto-generated OpenAPI documentation. |
-| Laravel Horizon | Queue monitoring. |
-| `laravel-notification-channels/fcm` | Push notifications. |
+| Laravel Horizon | Queue monitoring. Installed directly by the starter. |
+| Flysystem S3 + Predis | Storage and Redis clients. Installed directly by the starter. |
 
 ### Authentication
 
 - `config/auth.php` has the `huwiya-web` guard as the default `web` guard and a `huwiya-api` guard for stateless API requests.
-- `config/auth.php` points the `users` provider at `Domain\Identity\Models\User` — the **application** User which extends the Haykal User (with `InteractsWithHuwiya`, Spatie `HasRoles`, Media Library, and soft deletes). Edit the file in `domain/Identity/Models/User.php` to add columns, relations, or Huwiya claim overrides.
+- `config/auth.php` points the `users` provider at `Domain\Identity\Models\User` — the application's own standalone `Authenticatable` subclass. It composes `InteractsWithHuwiya` (from the Huwiya SDK), Spatie `HasRoles`, Media Library's `InteractsWithMedia`, ULIDs, and soft deletes, and carries the team's default claim-sync map inline (`name`, `phone`, `email`, `locale`, `zoneinfo`, `theme`). Edit `domain/Identity/Models/User.php` directly to add relations, scopes, or override any Huwiya SDK hook (`shouldAutoRegister`, `resolveHuwiyaConflict`, etc.) — the file is yours.
 
 ### Identity models
 
-The `Domain\Identity\Models` namespace ships three classes — all thin subclasses of Haykal's defaults, owned by the application:
+The `Domain\Identity\Models` namespace ships three application-owned classes. They lean on Spatie directly and on Haykal utilities (phone cast, query builder) — no haykal-provided base class anywhere in the inheritance chain:
 
 | Model | Extends | Wired in |
 |---|---|---|
-| `Domain\Identity\Models\User` | `HiTaqnia\Haykal\Core\Identity\Models\User` | `config/auth.php` |
-| `Domain\Identity\Models\Role` | `HiTaqnia\Haykal\Core\Identity\Models\Role` | `config/permission.php` |
-| `Domain\Identity\Models\Permission` | `HiTaqnia\Haykal\Core\Identity\Models\Permission` | `config/permission.php` |
+| `Domain\Identity\Models\User` | `Illuminate\Foundation\Auth\User` (Authenticatable) | `config/auth.php` |
+| `Domain\Identity\Models\Role` | `Spatie\Permission\Models\Role` | `config/permission.php` |
+| `Domain\Identity\Models\Permission` | `Spatie\Permission\Models\Permission` | `config/permission.php` |
 
-A matching `Domain\Identity\Database\Factories\UserFactory` reuses every Haykal default but produces the application subclass. Use `User::factory()->create()` as usual.
+A matching `Domain\Identity\Database\Factories\UserFactory` produces `User` instances with Iraqi-shaped seed data. Use `User::factory()->create()` as usual. The `UserQueryBuilder` (`wherePhoneNumber()` / `getByPhoneNumber()`) is wired on the User model via `newEloquentBuilder()`.
 
 ### Schema
 
-Migrations already applied on first install:
+Migrations live under `database/migrations/` and are owned by the application. On first install they produce:
 
 - `users` (ULID id, `huwiya_id`, name/phone/email, `locale`/`zoneinfo`/`theme`, soft deletes) + `sessions`.
 - Spatie permission tables (ULID-keyed). **Teams are disabled by default**; enable in `config/permission.php` when the application needs per-tenant role scoping, then add the `haykal.permissions.team` middleware after the tenancy resolver and run `migrate:fresh`.
 - Spatie Media Library table with ULID morphs.
 - Laravel notifications table with a ULID morph target.
+
+Edit, add, or drop these files directly — they're in the project tree, not inside a vendored package.
 
 ### API
 
@@ -107,7 +111,7 @@ The following middlewares are attached to both `web` and `api` route groups:
 ### Upstream configs published
 
 - `config/permission.php` — Spatie permission, already pointing at the application's `Domain\Identity\Models\Role` and `Domain\Identity\Models\Permission`, with `teams = false`.
-- `config/media-library.php` — already using `HiTaqnia\Haykal\Core\MediaLibrary\CustomPathGenerator`.
+- `config/media-library.php` — Spatie defaults. Swap `path_generator` for a project-specific generator when you need tenant- or subject-aware paths.
 - `config/huwiya.php` — Huwiya SDK configuration.
 - `config/scramble.php` — OpenAPI documentation generator.
 - `config/haykal-filament-icons.php` — icon aliases (Phosphor/Tabler) merged into Filament's icon registry.
@@ -362,23 +366,24 @@ See `packages/haykal-api`'s README for the complete pattern, including versionin
 
 ### 6. Customize the User / Role / Permission
 
-The three identity models already live in `domain/Identity/Models/`:
+The three identity models live in `domain/Identity/Models/` and are fully owned by the application:
 
-- `Domain\Identity\Models\User extends HiTaqnia\Haykal\Core\Identity\Models\User`
-- `Domain\Identity\Models\Role extends HiTaqnia\Haykal\Core\Identity\Models\Role`
-- `Domain\Identity\Models\Permission extends HiTaqnia\Haykal\Core\Identity\Models\Permission`
+- `Domain\Identity\Models\User extends Illuminate\Foundation\Auth\User` (composes `InteractsWithHuwiya`, `HasRoles`, `HasUlids`, `HasFactory`, `InteractsWithMedia`, `Notifiable`, `SoftDeletes`)
+- `Domain\Identity\Models\Role extends Spatie\Permission\Models\Role` with `HasUlids`
+- `Domain\Identity\Models\Permission extends Spatie\Permission\Models\Permission` with `HasUlids`
 
-`config/auth.php` and `config/permission.php` already point at these subclasses, so any change applies immediately.
+`config/auth.php` and `config/permission.php` already point at these classes.
 
-Add fillable columns, relations, accessors, and Huwiya-hook overrides directly in `domain/Identity/Models/User.php`:
+Edit them directly — no base-class contract to respect, no Composer update to wait for. Add relations, scopes, extra fillables, and Huwiya hook overrides inline:
 
 ```php
-class User extends HuwiyaUser
+class User extends Authenticatable implements HasMedia
 {
+    // ...existing traits + fillables...
+
     protected $fillable = [
-        ...parent::getFillable(),
-        'bio',
-        'department_id',
+        'name', 'phone', 'email', 'locale', 'zoneinfo', 'theme',
+        'bio', 'department_id',
     ];
 
     public function department(): BelongsTo
@@ -387,18 +392,24 @@ class User extends HuwiyaUser
     }
 
     // Override which Huwiya claims sync into local columns on every login.
-    protected function attributesFromClaims(\Huwiya\TokenClaims $claims): array
+    protected function attributesFromHuwiyaClaims(\Huwiya\TokenClaims $claims): array
     {
-        return array_merge(parent::attributesFromClaims($claims), [
+        return [
+            'name' => $claims->name,
+            'phone' => $claims->phone,
+            'email' => $claims->email,
+            'locale' => $claims->locale,
+            'zoneinfo' => $claims->zoneinfo,
+            'theme' => $claims->theme,
             // 'extra_column' => $claims->someClaim,
-        ]);
+        ];
     }
 }
 ```
 
-When extra columns land on `users`, ship a migration that adds them to the existing `users` table (do **not** republish the Haykal users migration).
+When extra columns land on `users`, add a new migration (`database/migrations/xxxx_add_bio_to_users_table.php`) — the starter's base users migration is a starting point, not a published package artifact.
 
-For phone/email recycling policy override `resolveHuwiyaConflict()` on the User subclass; for tenant-scoped user lookups override `newHuwiyaQuery()`.
+For phone/email recycling policy override `resolveHuwiyaConflict()` on the User; for tenant-scoped user lookups override `newHuwiyaQuery()`.
 
 ### 7. Wire queues and Horizon (when queues are used)
 

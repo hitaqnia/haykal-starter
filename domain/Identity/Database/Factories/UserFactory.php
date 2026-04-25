@@ -5,19 +5,37 @@ declare(strict_types=1);
 namespace Domain\Identity\Database\Factories;
 
 use Domain\Identity\Models\User;
-use HiTaqnia\Haykal\Core\Database\Factories\UserFactory as HaykalUserFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * Application User factory.
  *
- * Reuses every Haykal default (Huwiya id, Iraqi phone, locale /
- * zoneinfo / theme samples) but produces instances of the app's
- * `Domain\Identity\Models\User` subclass instead of the Haykal base.
- * Override states and add new ones here as the User model grows.
+ * Produces `Domain\Identity\Models\User` instances with Iraqi-flavored
+ * defaults: a ULID `huwiya_id`, an Iraqi mobile number, a safe email,
+ * and sampled locale / zoneinfo / theme values.
  *
- * @extends HaykalUserFactory<User>
+ * @extends Factory<User>
  */
-class UserFactory extends HaykalUserFactory
+class UserFactory extends Factory
 {
     protected $model = User::class;
+
+    public function definition(): array
+    {
+        return [
+            'huwiya_id' => (string) Str::ulid(),
+            'name' => fake()->name(),
+            'phone' => '+964'.fake()->numerify('7#########'),
+            'email' => fake()->unique()->safeEmail(),
+            'locale' => fake()->randomElement(['en', 'ar', '']),
+            'zoneinfo' => fake()->randomElement(['Asia/Baghdad', 'UTC', '']),
+            'theme' => fake()->randomElement(['light', 'dark', '']),
+        ];
+    }
+
+    public function withoutHuwiya(): static
+    {
+        return $this->state(fn () => ['huwiya_id' => null]);
+    }
 }

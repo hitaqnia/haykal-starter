@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Domain\Identity\Models;
 
-use HiTaqnia\Haykal\Core\Identity\Models\Permission as HaykalPermission;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Spatie\Permission\Models\Permission as SpatiePermission;
 
 /**
- * Application Permission.
+ * Application Permission — ULID-keyed Spatie permission.
  *
- * Extends the Haykal Permission (ULID-keyed Spatie permission) so the
- * app can add relations or attributes without forking the base class.
- * Registered in `config/permission.php` under `models.permission`.
+ * Spatie ships with int primary keys; this subclass swaps them for ULIDs
+ * to match the rest of the app's identifier scheme. Registered in
+ * `config/permission.php` under `models.permission`.
  */
-class Permission extends HaykalPermission
+class Permission extends SpatiePermission
 {
+    use HasUlids;
 }

@@ -7,8 +7,15 @@
     "require": {
         "php": "^8.3",
         "hitaqnia/haykal": "^1.0",
+        "hitaqnia/huwiya-laravel": "^1.0",
         "laravel/framework": "^13.0",
-        "laravel/tinker": "^3.0"
+        "laravel/horizon": "^5.43",
+        "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.29",
+        "predis/predis": "^3.0",
+        "spatie/laravel-data": "^4.17",
+        "spatie/laravel-medialibrary": "^11.15",
+        "spatie/laravel-translatable": "^6.11"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
