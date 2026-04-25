@@ -83,6 +83,7 @@ RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 
 COPY --link --from=vendor /usr/bin/composer /usr/bin/composer
 COPY --link deployment/php.dev.ini ${PHP_INI_DIR}/conf.d/99-php.ini
+COPY --link --chmod=755 deployment/entrypoint.sh /usr/local/bin/haykal-entrypoint
 
 # Create necessary directories
 RUN mkdir -p \
@@ -98,6 +99,8 @@ USER ${USER}
 
 EXPOSE 8000
 EXPOSE 5173
+
+ENTRYPOINT ["haykal-entrypoint"]
 
 # Default command runs PHP built-in server (simple and reliable for dev)
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

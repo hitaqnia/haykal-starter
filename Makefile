@@ -121,8 +121,6 @@ setup:
 	$(DC) run --rm --user root app bun install
 	@echo "Setting permissions..."
 	$(DC) run --rm --user root app chown -R laravel:laravel /var/www/html/vendor /var/www/html/node_modules
-	@echo "Generating app key..."
-	$(DC) run --rm app php artisan key:generate --force
 	@echo "Creating storage link..."
 	$(DC) run --rm app php artisan storage:link
 	@echo "Running migrations..."

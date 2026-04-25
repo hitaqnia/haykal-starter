@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -11,3 +13,5 @@ declare(strict_types=1);
 | API. Add non-panel web routes here if the app grows a public web face.
 |
 */
+
+Route::view('/', 'welcome');
