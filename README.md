@@ -101,10 +101,9 @@ Edit, add, or drop these files directly — they're in the project tree, not ins
 
 ### Middleware
 
-The following middlewares are attached to both `web` and `api` route groups:
+No middleware is attached to the `web` or `api` route groups by default. The starter ships with these aliases available for opt-in use:
 
-- `haykal.user.locale` — applies the authenticated user's stored locale.
-- `haykal.permissions.team` — forwards the active tenant into Spatie's `setPermissionsTeamId()`. Inert until teams are enabled in `config/permission.php`.
+- `haykal.permissions.team` — forwards the active tenant into Spatie's `setPermissionsTeamId()`. Slot it into the route groups or Filament panels that resolve a tenant, after the middleware that sets the active tenant. Not registered globally because not every route is tenant-scoped.
 
 `haykal.filament.*` middlewares are available as aliases and are slotted in automatically by `BasePanel` when you add Filament panels.
 

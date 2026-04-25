@@ -12,19 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Apply the haykal-core locale + permissions-team middlewares to
-        // every request so authenticated users see content in their
-        // preferred locale and Spatie permission queries are scoped to
-        // the active tenant automatically.
-        $middleware->appendToGroup('web', [
-            'haykal.user.locale',
-            'haykal.permissions.team',
-        ]);
-
-        $middleware->appendToGroup('api', [
-            'haykal.user.locale',
-            'haykal.permissions.team',
-        ]);
+        // Slot the `haykal.permissions.team` alias (shipped by haykal-core)
+        // into the route groups or panels that resolve a tenant. It is
+        // intentionally not registered globally because not every route is
+        // tenant-scoped — wire it up where it's needed.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
