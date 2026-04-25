@@ -1,25 +1,33 @@
 # =============================================================================
 # Haykal Starter — Docker Compose for Local Development
 # =============================================================================
+# This stack is driven entirely by .env.docker — the local .env is left
+# untouched so it can host a separate non-Docker config (e.g. sqlite for
+# host-side artisan commands). Always invoke compose with --env-file:
+#
+#     docker compose --env-file .env.docker <command>
+#
+# The Makefile already does this for you.
+#
 # Project naming:
 #   Every container, image, and volume name is prefixed with ${APP_SLUG}.
 #   The default is `haykal-app`; rename once per project via:
 #       make rename-project NAME=my-new-project
-#   …or by exporting APP_SLUG in your shell / setting it in .env.
+#
+#   The compose project name is also pinned to ${APP_SLUG} so that volumes
+#   are prefixed consistently (e.g. haykal-app_pgdata) — otherwise compose
+#   would derive the project name from the directory name, which would
+#   leak into volume names and break `docker compose down -v`.
 #
 # Quick Start:
-#   make setup       - First-time setup (creates .env, builds, starts, migrates)
+#   make setup       - First-time docker setup (build, install deps, migrate)
 #   make docker-up   - Start containers
 #   make docker-down - Stop containers
 #   make docker-logs - View app logs
 #   make help        - Show all available commands
-#
-# Or use docker compose directly:
-#   docker compose up -d                              # Start all services
-#   docker compose up -d --build                      # Rebuild and start
-#   docker compose logs -f app                        # Follow app logs
-#   docker compose exec app sh                        # Shell into app container
 # =============================================================================
+
+name: ${APP_SLUG:-haykal-app}
 
 services:
   app:
@@ -50,7 +58,7 @@ services:
       APP_DEBUG: true
       CONTAINER_MODE: http
     env_file:
-      - .env
+      - .env.docker
     networks:
       - haykal
 
@@ -71,7 +79,7 @@ services:
       APP_ENV: local
       APP_DEBUG: true
     env_file:
-      - .env
+      - .env.docker
     command: php artisan horizon
     healthcheck:
       disable: true
@@ -94,7 +102,7 @@ services:
       APP_ENV: local
       APP_DEBUG: true
     env_file:
-      - .env
+      - .env.docker
     command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
     networks:
       - haykal

@@ -12,8 +12,14 @@
 
 # Project slug read from the environment. Falls back to `haykal-app` — the
 # docker-compose defaults mirror this. Use `make rename-project NAME=...`
-# to change it consistently across .env, .env.docker, and this file.
+# to change it consistently across .env.docker and this file.
 APP_SLUG ?= haykal-app
+
+# Every docker-compose invocation reads .env.docker (both for variable
+# interpolation in docker-compose.yaml and for the env loaded into each
+# service). The local .env file is intentionally left untouched so it can
+# host a separate non-Docker config — e.g. sqlite for host-side artisan.
+DC := APP_SLUG=$(APP_SLUG) docker compose --env-file .env.docker
 
 # =============================================================================
 # Help
@@ -23,7 +29,7 @@ help:
 	@echo "Haykal Starter — Local Development"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make setup                    - First-time setup (build, install deps, migrate)"
+	@echo "  make setup                    - First-time docker setup (reads .env.docker; build, install deps, migrate)"
 	@echo "  make rename-project NAME=...  - Rename every container / image / volume prefix"
 	@echo ""
 	@echo "Docker:"
@@ -60,7 +66,7 @@ help:
 # =============================================================================
 # Rename Project
 # =============================================================================
-# Rewrites APP_SLUG across .env, .env.docker, and this Makefile so every
+# Rewrites APP_SLUG across .env.docker and this Makefile so every
 # container / image / volume name is prefixed with the new slug. Run once
 # after cloning the starter; re-run whenever the project is forked.
 #
@@ -83,18 +89,16 @@ rename-project:
 		exit 1; \
 	fi
 	@echo "Renaming project slug: $(APP_SLUG) -> $(NAME)"
-	@# .env / .env.docker — set or add APP_SLUG=
-	@for file in .env .env.docker; do \
-		if [ -f $$file ]; then \
-			if grep -q '^APP_SLUG=' $$file; then \
-				sed -i.bak "s/^APP_SLUG=.*/APP_SLUG=$(NAME)/" $$file && rm -f $$file.bak; \
-			else \
-				printf '\nAPP_SLUG=$(NAME)\n' >> $$file; \
-			fi; \
-			echo "  updated $$file"; \
+	@# .env.docker — set or add APP_SLUG=
+	@if [ -f .env.docker ]; then \
+		if grep -q '^APP_SLUG=' .env.docker; then \
+			sed -i.bak "s/^APP_SLUG=.*/APP_SLUG=$(NAME)/" .env.docker && rm -f .env.docker.bak; \
+		else \
+			printf '\nAPP_SLUG=$(NAME)\n' >> .env.docker; \
 		fi; \
-	done
-	@# Makefile — bump the default so `make` without .env still picks up the new slug
+		echo "  updated .env.docker"; \
+	fi
+	@# Makefile — bump the default so `make` without env still picks up the new slug
 	@sed -i.bak "s/^APP_SLUG ?= .*/APP_SLUG ?= $(NAME)/" Makefile && rm -f Makefile.bak
 	@echo "  updated Makefile default"
 	@echo ""
@@ -105,26 +109,26 @@ rename-project:
 # =============================================================================
 
 setup:
-	@echo "Setting up local development environment for $(APP_SLUG)..."
-	@if [ ! -f .env ]; then cp .env.docker .env; echo "Created .env from .env.docker"; fi
-	APP_SLUG=$(APP_SLUG) docker compose build
-	APP_SLUG=$(APP_SLUG) docker compose up -d postgres redis minio minio-setup mailpit
+	@echo "Setting up Docker development environment for $(APP_SLUG)..."
+	@echo "(reads .env.docker — your local .env is left untouched)"
+	$(DC) build
+	$(DC) up -d postgres redis minio minio-setup mailpit
 	@echo "Waiting for services to be ready..."
 	@sleep 10
 	@echo "Installing PHP dependencies..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app composer install
+	$(DC) run --rm --user root app composer install
 	@echo "Installing JS dependencies..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app bun install
+	$(DC) run --rm --user root app bun install
 	@echo "Setting permissions..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app chown -R laravel:laravel /var/www/html/vendor /var/www/html/node_modules
+	$(DC) run --rm --user root app chown -R laravel:laravel /var/www/html/vendor /var/www/html/node_modules
 	@echo "Generating app key..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm app php artisan key:generate --force
+	$(DC) run --rm app php artisan key:generate --force
 	@echo "Creating storage link..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm app php artisan storage:link
+	$(DC) run --rm app php artisan storage:link
 	@echo "Running migrations..."
-	APP_SLUG=$(APP_SLUG) docker compose run --rm app php artisan migrate --force
+	$(DC) run --rm app php artisan migrate --force
 	@echo "Starting all services..."
-	APP_SLUG=$(APP_SLUG) docker compose up -d
+	$(DC) up -d
 	@echo ""
 	@echo "Setup complete!"
 	@echo ""
@@ -138,36 +142,36 @@ setup:
 # =============================================================================
 
 docker-build:
-	APP_SLUG=$(APP_SLUG) docker compose build
+	$(DC) build
 
 docker-up:
-	APP_SLUG=$(APP_SLUG) docker compose up -d
+	$(DC) up -d
 
 docker-down:
-	APP_SLUG=$(APP_SLUG) docker compose down
+	$(DC) down
 
 docker-restart:
-	APP_SLUG=$(APP_SLUG) docker compose restart
+	$(DC) restart
 
 docker-logs:
-	APP_SLUG=$(APP_SLUG) docker compose logs -f app
+	$(DC) logs -f app
 
 docker-logs-all:
-	APP_SLUG=$(APP_SLUG) docker compose logs -f
+	$(DC) logs -f
 
 docker-shell:
-	APP_SLUG=$(APP_SLUG) docker compose exec app sh
+	$(DC) exec app sh
 
 docker-psql:
-	APP_SLUG=$(APP_SLUG) docker compose exec postgres psql -U postgres -d $${POSTGRES_DB:-haykal}
+	$(DC) exec postgres psql -U postgres -d $${POSTGRES_DB:-haykal}
 
 docker-clean:
-	APP_SLUG=$(APP_SLUG) docker compose down -v --remove-orphans
+	$(DC) down -v --remove-orphans
 	@echo "Cleaned up all containers and volumes"
 
 docker-rebuild:
-	APP_SLUG=$(APP_SLUG) docker compose down -v --remove-orphans
-	APP_SLUG=$(APP_SLUG) docker compose build --no-cache
+	$(DC) down -v --remove-orphans
+	$(DC) build --no-cache
 	@echo "Rebuild complete. Run 'make setup' to set up the environment."
 
 # =============================================================================
@@ -175,51 +179,51 @@ docker-rebuild:
 # =============================================================================
 
 migrate:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan migrate
+	$(DC) exec app php artisan migrate
 
 migrate-down:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan migrate:rollback
+	$(DC) exec app php artisan migrate:rollback
 
 migrate-fresh:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan migrate:fresh
+	$(DC) exec app php artisan migrate:fresh
 
 seed:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan db:seed
+	$(DC) exec app php artisan db:seed
 
 # =============================================================================
 # Laravel
 # =============================================================================
 
 test:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan test
+	$(DC) exec app php artisan test
 
 tinker:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan tinker
+	$(DC) exec app php artisan tinker
 
 artisan:
-	APP_SLUG=$(APP_SLUG) docker compose exec app php artisan $(filter-out $@,$(MAKECMDGOALS))
+	$(DC) exec app php artisan $(filter-out $@,$(MAKECMDGOALS))
 
 # =============================================================================
 # Frontend
 # =============================================================================
 
 vite:
-	APP_SLUG=$(APP_SLUG) docker compose exec app bun run dev
+	$(DC) exec app bun run dev
 
 build-fe:
-	APP_SLUG=$(APP_SLUG) docker compose exec app bun run build
+	$(DC) exec app bun run build
 
 # =============================================================================
 # Composer
 # =============================================================================
 
 composer-install:
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app composer install
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app chown -R laravel:laravel /var/www/html/vendor
+	$(DC) run --rm --user root app composer install
+	$(DC) run --rm --user root app chown -R laravel:laravel /var/www/html/vendor
 
 composer-update:
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app composer update
-	APP_SLUG=$(APP_SLUG) docker compose run --rm --user root app chown -R laravel:laravel /var/www/html/vendor
+	$(DC) run --rm --user root app composer update
+	$(DC) run --rm --user root app chown -R laravel:laravel /var/www/html/vendor
 
 # Catch-all for artisan arguments
 %:

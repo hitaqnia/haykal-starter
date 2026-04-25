@@ -14,7 +14,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
 
             // Huwiya subject identifier — populated on first OAuth login.
-            $table->ulid('huwiya_id')->nullable()->unique();
+            $table->huwiyaIdentifier();
 
             $table->string('name');
             $table->string('phone')->nullable()->unique();
