@@ -17,9 +17,9 @@ use Filament\View\PanelsIconAlias;
 | through the Filament icons config. Edit the published copy to rebrand
 | on a per-application basis.
 |
-| The values are Blade-icon identifiers supplied by `codeat3/blade-phosphor-icons`
-| (or `secondnetwork/blade-tabler-icons`). Install either package — or
-| both — in the consuming application to ensure the identifiers resolve.
+| The values are Blade-icon identifiers supplied by `codeat3/blade-phosphor-icons`,
+| which ships transitively through `tonegabes/filament-phosphor-icons` (a
+| package require of `hitaqnia/haykal-filament`). No app-side install required.
 |
 */
 

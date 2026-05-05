@@ -6,7 +6,8 @@
     "license": "proprietary",
     "require": {
         "php": "^8.3",
-        "hitaqnia/haykal": "^1.0",
+        "hitaqnia/haykal-api": "^1.0",
+        "hitaqnia/haykal-filament": "^2.0",
         "hitaqnia/huwiya-laravel": "^1.0",
         "laravel/framework": "^13.0",
         "laravel/horizon": "^5.43",

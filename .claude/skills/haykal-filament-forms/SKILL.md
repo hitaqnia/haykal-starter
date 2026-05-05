@@ -1,6 +1,6 @@
 ---
 name: haykal-filament-forms
-description: Use when building Filament forms — translatable inputs, location/polygon pickers, image galleries, dependent fields, custom validation rules. Covers TranslatableTabs, the Mapbox component family, ImageGallery (ViewerJS), live() + afterStateUpdated patterns, and Rule injection via ->rule(new <DomainRule>(...)).
+description: Use when building Filament forms — translatable inputs, location/polygon pickers, dependent fields, custom validation rules. Covers TranslatableTabs, the Mapbox component family (now with closure-driven center/zoom/height for reactive maps), live() + afterStateUpdated patterns, and Rule injection via ->rule(new <DomainRule>(...)).
 ---
 
 # haykal-filament-forms
@@ -61,21 +61,28 @@ MapboxLocationViewer::make('coordinates');
 MapboxPolygonsViewer::make('boundary');
 ```
 
-Configuration is per-app in `config/mapbox.php` (token, style, default center). The components lazy-load JS, so unused panels pay no cost.
+Configuration is per-app in `config/mapbox.php` (token, style, default center). The components lazy-load JS, so unused panels pay no cost. Arabic / Hebrew / Persian map labels render correctly out of the box — `mapbox-gl-rtl-text` is registered (lazy) on first map init.
 
 Pair with `support/Domain/Concerns/HasLocation.php` / `HasPolygon.php` traits on the model when porting from the canonical hibayt-backend pattern.
 
-## ImageGallery — ViewerJS
+### Reactive Mapbox configuration
 
-For displaying a model's image collection with zoom/pan:
+`mapHeight`, `mapCenter`, `mapZoom`, and `navigationControl` accept Filament closures and re-evaluate every render. Pair with `live()` on a sibling field to drive the map from another component:
 
 ```php
-use HiTaqnia\Haykal\Filament\ViewerJs\Components\ImageGallery;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
 
-ImageGallery::make('photos')->collection('photos');
+Select::make('city')->options([...])->live();
+
+MapboxLocationPicker::make('coordinates')
+    ->mapCenter(fn (Get $get): array => match ($get('city')) {
+        'baghdad' => [44.3661, 33.3152],
+        'erbil'   => [44.0090, 36.1900],
+        default   => [-74.5, 40.0],
+    })
+    ->mapZoom(fn (Get $get): int => $get('city') ? 12 : 9);
 ```
-
-Reads the Spatie Media Library collection on the record. Use in infolists and view pages, not forms.
 
 ## Dependent fields — `live()` + `afterStateUpdated`
 
@@ -135,5 +142,5 @@ Pass a closure when the rule depends on the current record (so edit pages can ig
 
 - Source: `haykal-monorepo/packages/haykal-filament/src/Forms/TranslatableTabs.php`
 - Mapbox: `haykal-monorepo/packages/haykal-filament/src/Mapbox/Components/{MapboxLocationPicker,MapboxLocationViewer,MapboxPolygonsDrawer,MapboxPolygonsViewer}.php`
-- Image gallery: `haykal-monorepo/packages/haykal-filament/src/ViewerJs/Components/ImageGallery.php`
+- Mapbox closure trait: `haykal-monorepo/packages/haykal-filament/src/Mapbox/Concerns/InteractsWithMapbox.php`
 - See also: **haykal-localization**, **haykal-filament-resource**, **haykal-models**

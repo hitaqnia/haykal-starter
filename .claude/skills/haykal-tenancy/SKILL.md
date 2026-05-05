@@ -101,7 +101,7 @@ protected function tenantSlugAttribute(): ?string
 }
 ```
 
-`BasePanel` auto-installs the tenant middleware stack — `FilamentTenancyMiddleware` (sets `Tenancy::setTenantId(...)` from the resolved Filament tenant), `PermissionsTeamMiddleware` (forwards into Spatie's `setPermissionsTeamId`), and `AccessCheckingMiddleware`. See **haykal-filament-panel**.
+`BasePanel` auto-installs the tenant middleware stack — `FilamentTenancyMiddleware` (sets `Tenancy::setTenantId(...)` from the resolved Filament tenant) and `PermissionsTeamMiddleware` (forwards into Spatie's `setPermissionsTeamId`). See **haykal-filament-panel**.
 
 For super-admin / single-tenant panels, return `null` from `tenantModel()`.
 

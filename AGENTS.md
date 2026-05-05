@@ -16,7 +16,7 @@ Index — see `.claude/skills/haykal-overview/SKILL.md` first, then load the spe
 - `haykal-domain-actions` — Action classes
 - `haykal-filament-panel` — `BasePanel` subclassing
 - `haykal-filament-resource` — `BaseResource`, Form/Table/Infolist split
-- `haykal-filament-forms` — `TranslatableTabs`, Mapbox, ImageGallery
+- `haykal-filament-forms` — `TranslatableTabs`, Mapbox
 - `haykal-api-module` — `ApiProvider`, `ApiResponse`, FormRequest, JsonResource
 - `haykal-tests` — PHPUnit (not Pest)
 - `haykal-class-sections` — three-line `// ----` section headers inside multi-group classes

@@ -1,11 +1,11 @@
 ---
 name: haykal-filament-panel
-description: Use when adding or modifying a Filament panel — admin, management, residents, operations, etc. Covers subclassing BasePanel, getId / customizePanel hooks, tenancy wiring (tenantModel, tenantSlugAttribute), Huwiya OAuth login, the access Gate, HaykalPlugin toggles, and the publish-theme command.
+description: Use when adding or modifying a Filament panel — admin, management, residents, operations, etc. Covers subclassing BasePanel, getId / customizePanel hooks, tenancy wiring (tenantModel, tenantSlugAttribute), the Huwiya OAuth consent login, locale-aware fonts, and the publish-theme command.
 ---
 
 # haykal-filament-panel
 
-Every Filament panel in a Haykal app subclasses `HiTaqnia\Haykal\Filament\BasePanel`. The base wires the middleware stack, Huwiya OAuth login, SPA mode, full-width layout, light theme, the Spatie translatable plugin, and convention-driven discovery for `app/Panels/<Name>/` (Resources, Pages, Widgets, Clusters).
+Every Filament panel in a Haykal app subclasses `HiTaqnia\Haykal\Filament\BasePanel`. The base wires the middleware stack, the Huwiya OAuth consent-login page, SPA mode, full-width layout, light theme, no top bar, locale-aware fonts (Outfit/Tajawal/Noto Sans Arabic), the Spatie translatable plugin, and convention-driven discovery for `app/Panels/<Name>/` (Resources, Pages, Widgets, Clusters).
 
 ## Class skeleton
 
@@ -21,7 +21,6 @@ namespace App\Providers\Panels;
 use App\Models\Complex;
 use Filament\Panel;
 use HiTaqnia\Haykal\Filament\BasePanel;
-use HiTaqnia\Haykal\Filament\HaykalPlugin;
 
 final class ManagementPanelProvider extends BasePanel
 {
@@ -34,12 +33,7 @@ final class ManagementPanelProvider extends BasePanel
     {
         return $panel
             ->brandName('Management')
-            ->viteTheme('resources/css/filament/management/theme.css')
-            ->plugin(
-                HaykalPlugin::make()
-                    ->withTranslatableTabs()
-                    ->withAccessChecking(),
-            );
+            ->viteTheme('resources/css/filament/management/theme.css');
     }
 
     protected function tenantModel(): ?string
@@ -71,14 +65,16 @@ return [
 | `customizePanel(Panel $panel): Panel` | yes | Brand name, theme, extra plugins, navigation groups, dashboard widgets. Apply on top of the BasePanel defaults; return the same `$panel`. |
 | `tenantModel(): ?string` | optional | Concrete tenant Eloquent model (e.g., `Complex::class`). Return `null` for super-admin / single-tenant panels. |
 | `tenantSlugAttribute(): ?string` | optional | Column on the tenant model used as the URL slug (`slug`). `null` falls back to PK (ULID). |
-| `loginPage(): string` | optional | Custom login page class. Default is `HuwiyaRedirectLogin`. |
+| `loginPage(): string` | optional | Custom login page class. Default is `HuwiyaConsentLogin`. |
 | `defaultPlugins(): array` | optional | Override the SpatieTranslatablePlugin default. Rare. |
+| `fontFamiliesByLocale(): array` | optional | Override the locale → font family map. Defaults: `default→Outfit`, `en→Outfit`, `ar→Tajawal`, `ku→Noto Sans Arabic`. |
 
 ## What `BasePanel` already does
 
-- Filament middleware stack (cookies, session, CSRF, locale)
-- Authenticate with Huwiya OAuth → JWT (`HuwiyaRedirectLogin`)
-- SPA mode (`->spa()`), full-width content, light-only theme, no global search
+- Filament middleware stack (cookies, session, CSRF).
+- Authenticate with Huwiya OAuth → JWT (`HuwiyaConsentLogin` — single-button consent page, translated through `haykal-filament::auth.login.*`).
+- SPA mode (`->spa()`), full-width content, light-only theme, no global search, no topbar.
+- Locale-aware Bunny font (`Outfit` / `Tajawal` / `Noto Sans Arabic`) via `Panel::font(...)` — the closure resolves the active locale on every render.
 - Convention discovery:
   - Resources: `app/Panels/<Name>/Resources` → `App\Panels\<Name>\Resources\…`
   - Pages: `app/Panels/<Name>/Pages` → `App\Panels\<Name>\Pages\…`
@@ -87,34 +83,12 @@ return [
 - When `tenantModel()` is non-null: `->tenant($model, $slug)`, `->tenantMenu(false)`, and tenant middleware:
   - `FilamentTenancyMiddleware` — sets `Tenancy::setTenantId(...)`
   - `PermissionsTeamMiddleware` — forwards to Spatie `setPermissionsTeamId(...)`
-  - `AccessCheckingMiddleware` — enforces `<panel-id>.access` Gate
 
 Don't reimplement any of this in `customizePanel`.
 
-## HaykalPlugin toggles
+## Global Filament defaults (per-app provider)
 
-Per-panel feature flags via `HaykalPlugin::make()`:
-
-- `withTranslatableTabs()` — installs Spatie translatable plugin (already in `BasePanel::defaultPlugins()`; calling this is a no-op unless you've overridden defaults).
-- `withAccessChecking()` — appends `<panel-id>.access` Gate middleware to the auth stack. Required when the panel is gated (most are).
-
-## Access Gate
-
-Define one Gate per panel in `app/Providers/AppServiceProvider.php::boot()`:
-
-```php
-use Domain\Identity\Models\User;
-use Illuminate\Support\Facades\Gate;
-
-public function boot(): void
-{
-    Gate::define('management.access', fn (User $user) => $user->is_employee);
-    Gate::define('admin.access',      fn (User $user) => $user->hasRole('admin'));
-    Gate::define('residents.access',  fn (User $user) => $user->is_resident);
-}
-```
-
-Pair with `HaykalPlugin::make()->withAccessChecking()` in the panel's `customizePanel()`.
+For app-wide Filament UX defaults (no "Create another", slide-over column manager + filters, em-dash placeholder + "Click to copy" tooltip on copyable text), subclass `BaseFilamentServiceProvider` once in `app/Providers/FilamentServiceProvider.php` and register it in `bootstrap/providers.php`. Override individual `configure*()` hooks to relax or extend a single concern. See haykal-filament's README for the full list.
 
 ## Theme
 
@@ -124,26 +98,26 @@ Scaffold the panel theme:
 php artisan haykal:publish-theme management
 ```
 
-This drops `resources/css/filament/management/theme.css` that `@import`s the Haykal base theme. Edit it for panel-specific tweaks. Reference it via `->viteTheme('resources/css/filament/management/theme.css')` in `customizePanel`.
+This drops `resources/css/filament/management/theme.css` that `@import`s Filament's default theme and the Haykal base theme directly from the vendor path. Edit it for panel-specific tweaks — or override individual tokens (`--filament-primary-rgb`, `--filament-shell`, `--filament-radius`, …) in a `@theme {}` block to re-skin without rewriting rules. Reference it via `->viteTheme('resources/css/filament/management/theme.css')` in `customizePanel`.
 
 After editing the theme, `bun run build` (or `bun run dev` in development) so Vite picks it up.
 
 ## Multi-panel apps
 
-A Haykal app commonly has 5–10 panels (admin, management, operations, sales, hr, finance, security, settings, residents, documentation). Each is one provider class registered in `bootstrap/providers.php`. They share `BasePanel`'s defaults and only customize the brand, theme, plugin set, and tenancy.
+A Haykal app commonly has 5–10 panels (admin, management, operations, sales, hr, finance, security, settings, residents, documentation). Each is one provider class registered in `bootstrap/providers.php`. They share `BasePanel`'s defaults and only customize the brand, theme, and tenancy.
 
 ## Custom auth page
 
-Default is `HuwiyaRedirectLogin` (OAuth redirect). To replace it (e.g., a consent page):
+Default is `HuwiyaConsentLogin` (single-button consent → OAuth redirect). To replace it (e.g., an immediate redirect, custom layout):
 
 ```php
 protected function loginPage(): string
 {
-    return CustomConsentPage::class;
+    return CustomLoginPage::class;
 }
 ```
 
-`CustomConsentPage` must extend `Filament\Pages\SimplePage` and ultimately redirect to Huwiya — don't roll a local username/password login.
+`CustomLoginPage` must extend `Filament\Pages\SimplePage` and ultimately redirect to Huwiya — don't roll a local username/password login.
 
 ## Don't
 
@@ -154,8 +128,9 @@ protected function loginPage(): string
 
 ## References
 
-- Source: `haykal-monorepo/packages/haykal-filament/src/{BasePanel,HaykalPlugin}.php`
-- Auth login: `haykal-monorepo/packages/haykal-filament/src/Auth/HuwiyaRedirectLogin.php`
-- Middleware: `haykal-monorepo/packages/haykal-filament/src/Http/Middlewares/{FilamentTenancyMiddleware,SetPanelLocale,AccessCheckingMiddleware}.php`
+- Source: `haykal-monorepo/packages/haykal-filament/src/BasePanel.php`
+- Auth login: `haykal-monorepo/packages/haykal-filament/src/Auth/HuwiyaConsentLogin.php`
+- Middleware: `haykal-monorepo/packages/haykal-filament/src/Http/Middlewares/FilamentTenancyMiddleware.php`
+- Global defaults: `haykal-monorepo/packages/haykal-filament/src/BaseFilamentServiceProvider.php`
 - Starter README §"Create your Filament panel(s)"
 - See also: **haykal-tenancy**, **haykal-filament-resource**, **haykal-filament-forms**
